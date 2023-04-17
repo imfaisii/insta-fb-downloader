@@ -30,7 +30,7 @@ Route::post('/scrap', function (Request $request) {
 
     $process = new Process([
         'node',
-        'C:\laragon\www\social-media-scrapper\resources\js\app.mjs',
+        'C:\laragon\www\insta-fb-downloader\resources\js\app.mjs',
         json_encode($data)
     ]);
     $process->run();

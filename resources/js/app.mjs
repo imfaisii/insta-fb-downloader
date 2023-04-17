@@ -80,7 +80,11 @@ async function scrapInstagram(page, url) {
 }
 
 async function scrap(platform = 'facebook', url, headless = true) {
-    const browser = await puppeteer.launch({ headless: headless });
+    const browser = await puppeteer.launch({
+        executablePath: 'C:\\Users\\chAudhary FAisal\\.cache\\puppeteer\\chrome\\win64-1095492\\chrome-win\\chrome',
+        args: ['--no-sandbox'],
+        headless
+    });
 
     const page = await browser.newPage();
 
