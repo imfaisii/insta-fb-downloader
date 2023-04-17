@@ -68,6 +68,8 @@ async function scrapInstagram(page, url) {
 
     const res = await response.json();
 
+    console.log(res)
+
     setSuccess({
         full_name: res.data.shortcode_media.owner.full_name,
         username: res.data.shortcode_media.owner.username,
@@ -80,7 +82,12 @@ async function scrapInstagram(page, url) {
 }
 
 async function scrap(platform = 'facebook', url, headless = true) {
-    const browser = await puppeteer.launch({ headless: headless });
+    const browser = await puppeteer.launch({
+        executablePath: '/data/www/scrapper.ggstreetview.website/chrome/linux-1108766/chrome-linux/chrome',
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        ignoreDefaultArgs: ['--disable-extensions'],
+        headless
+    });
 
     const page = await browser.newPage();
 

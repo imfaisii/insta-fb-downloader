@@ -27,10 +27,11 @@ Route::post('/scrap', function (Request $request) {
         'url' => 'required|url',
         'platform' => 'required|in:facebook,instagram',
     ]);
-
+    
+    
     $process = new Process([
-        'node',
-        'C:\laragon\www\social-media-scrapper\resources\js\app.mjs',
+        '/data/www/scrapper.ggstreetview.website/bin/node',
+        '/data/www/scrapper.ggstreetview.website/insta-fb-downloader/resources/js/app.mjs',
         json_encode($data)
     ]);
     $process->run();
@@ -40,7 +41,6 @@ Route::post('/scrap', function (Request $request) {
     }
 
     $response = $process->getOutput();
-
     $response = str_replace("\n", "", $response);
     $response = str_replace("'", '"', $response);
     $response = str_replace("  ", '', $response);
