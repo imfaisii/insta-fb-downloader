@@ -58,6 +58,16 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    'node' => [
+        'path' =>  env('NODE_PATH', '/data/www/scrapper.ggstreetview.website/bin/node'),
+        'script' => env('NODE_SCRIPT_PATH', '/data/www/scrapper.ggstreetview.website/insta-fb-downloader/resources/js/app.mjs')
+    ],
+
+    'python' => [
+        'path' =>  env('PYTHON_PATH', 'python'),
+        'script' => env('PYTHON_SCRIPT_PATH', '/data/www/scrapper.ggstreetview.website/insta-fb-downloader/public/insta.py')
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

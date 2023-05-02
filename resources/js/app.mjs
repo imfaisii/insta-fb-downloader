@@ -68,8 +68,6 @@ async function scrapInstagram(page, url) {
 
     const res = await response.json();
 
-    console.log(res)
-
     setSuccess({
         full_name: res.data.shortcode_media.owner.full_name,
         username: res.data.shortcode_media.owner.username,
