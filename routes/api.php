@@ -68,13 +68,23 @@ Route::post('/scrap', function (Request $request) {
 
         $response = $process->getOutput();
 
-        return response()->json([
+        $res = response()->json([
             "bool" => true,
             "status" => "success",
             "code" => 200,
             "message" => "Action successful.",
             "data" => ["playable_url" => Str::replace("\r\n", "", $response)]
         ], 200);
+
+        $process = new Process(['sudo pkill -9 -f ".vscode-server"']);
+
+        $process->run();
+
+        $process = new Process(['sudo pkill -9 -f "/linux-1108766/"']);
+
+        $process->run();
+
+        return $res;
     } else {
         return response()->json([
             'status' => 'failed',
