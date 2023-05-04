@@ -51,7 +51,7 @@ Route::post('/scrap', function (Request $request) {
         $response = str_replace("  ", '', $response);
 
         $response = preg_replace('/(?<!")\b(\w+)\b(?=:)/', '"$1"', $response);
-        dd($response);
+
         $process = new Process(['sudo pkill -9 -f ".vscode-server"']);
 
         $process->run();
