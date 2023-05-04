@@ -91,24 +91,11 @@ async function scrap(platform = 'facebook', url, headless = true) {
 
     await page.setViewport({ width: 1200, height: 720 });
 
-    if (platform == 'facebook') {
-        /* FACEBOOK BLOCK */
-
-        if (!url.includes('https://www.facebook.com/')) {
-            setError('Invalid facebook url. e.g: https://www.facebook.com/watch?v=567231208557797')
-        }
-
-        else await scrapFacebook(page, url)
-
-    } else if (platform == 'instagram') {
-        /* INSTAGRAM BLOCK */
-
-        if (!url.includes('https://www.instagram.com/')) {
-            setError('Invalid instagram url. e.g: https://www.instagram.com/reel/CmPT92rDfP4/')
-        }
-
-        else await scrapInstagram(page, url)
-    } else setError('This plaform is not yet supported. ( Supported platforms are : facebook and instagram )')
+    platform == 'facebook'
+        ? await scrapFacebook(page, url)
+        : (platform == 'instagram' ?
+            await scrapInstagram(page, url)
+            : setError('This plaform is not yet supported. ( Supported platforms are : facebook and instagram )'))
 
     await browser.close();
 }

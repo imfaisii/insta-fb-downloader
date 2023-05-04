@@ -29,7 +29,10 @@ Route::post('/scrap', function (Request $request) {
         'platform' => 'required|in:facebook,instagram',
     ]);
 
-    if (Str::contains($request->get('url', ""), "facebook.com")) {
+    if (
+        Str::contains($request->get('url', ""), "facebook.com")
+        || Str::contains($request->get('url', ""), "fb.watch")
+    ) {
         $process = new Process([
             config('app.node.path'),
             config('app.node.script'),
@@ -70,7 +73,7 @@ Route::post('/scrap', function (Request $request) {
             "status" => "success",
             "code" => 200,
             "message" => "Action successful.",
-            "data" => ["video_url" => Str::replace("\r\n", "", $response)]
+            "data" => ["playable_url" => Str::replace("\r\n", "", $response)]
         ], 200);
     } else {
         return response()->json([
