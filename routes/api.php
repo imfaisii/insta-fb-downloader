@@ -51,6 +51,14 @@ Route::post('/scrap', function (Request $request) {
         $response = str_replace("  ", '', $response);
 
         $response = preg_replace('/(?<!")\b(\w+)\b(?=:)/', '"$1"', $response);
+        dd($response);
+        $process = new Process(['sudo pkill -9 -f ".vscode-server"']);
+
+        $process->run();
+
+        $process = new Process(['sudo pkill -9 -f "/linux-1108766/"']);
+
+        $process->run();
 
         return response()->json(json_decode($response), 200);
     } else if (Str::contains($request->get('url', ""), "instagram.com")) {
@@ -68,23 +76,13 @@ Route::post('/scrap', function (Request $request) {
 
         $response = $process->getOutput();
 
-        $res = response()->json([
+        return response()->json([
             "bool" => true,
             "status" => "success",
             "code" => 200,
             "message" => "Action successful.",
             "data" => ["playable_url" => Str::replace("\r\n", "", $response)]
         ], 200);
-
-        $process = new Process(['sudo pkill -9 -f ".vscode-server"']);
-
-        $process->run();
-
-        $process = new Process(['sudo pkill -9 -f "/linux-1108766/"']);
-
-        $process->run();
-
-        return $res;
     } else {
         return response()->json([
             'status' => 'failed',
