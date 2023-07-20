@@ -1,11 +1,8 @@
 <?php
 
 use App\Services\ExtractService;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
 use Spatie\Browsershot\Browsershot;
-
-use function App\Helpers\get_string_between;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,9 +16,13 @@ use function App\Helpers\get_string_between;
 */
 
 Route::get('/test', function () {
+
     $html = Browsershot::url('https://www.facebook.com/watch?v=734316828376137')
-        ->waitUntilNetworkIdle()
+        ->noSandbox()
+        ->ignoreHttpsErrors()
+        ->setChromePath("/data/www/scrapper.ggstreetview.website/chrome/linux-1108766/chrome-linux/chrome")
         ->bodyHtml();
+
     try {
         $links = ExtractService::facebook($html);
     } catch (\Exception $exception) {
