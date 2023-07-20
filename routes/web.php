@@ -1,6 +1,11 @@
 <?php
 
+use App\Services\ExtractService;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
+use Spatie\Browsershot\Browsershot;
+
+use function App\Helpers\get_string_between;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +18,16 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
+Route::get('/test', function () {
+    $html = Browsershot::url('https://www.facebook.com/watch?v=734316828376137')
+        ->waitUntilNetworkIdle()
+        ->bodyHtml();
+    try {
+        $links = ExtractService::facebook($html);
+    } catch (\Exception $exception) {
+        dd($exception->getMessage());
+    }
+
+    dd($links);
     return view('welcome');
 });
