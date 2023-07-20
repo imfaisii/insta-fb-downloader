@@ -21,6 +21,7 @@ Route::get('/test', function () {
         ->noSandbox()
         ->ignoreHttpsErrors()
         ->setChromePath("/data/www/scrapper.ggstreetview.website/chrome/linux-1108766/chrome-linux/chrome")
+        ->waitUntilNetworkIdle()
         ->bodyHtml();
 
     try {
