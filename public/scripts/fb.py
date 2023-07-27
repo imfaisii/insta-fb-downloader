@@ -19,6 +19,8 @@ def get_representations(url):
     chrome_options = Options()
     chrome_options.add_argument("--headless")  # Run Chrome in headless mode (no GUI)
     chrome_options.add_argument("--window-size=1920x1080")  # Set window size
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
 
     # Initialize the Chrome webdriver
     driver = webdriver.Chrome(options=chrome_options)
