@@ -17,7 +17,7 @@ def find_between( s, first, last ):
 def get_representations(url):
     # Configure Chrome options
     chrome_options = Options()
-    # chrome_options.add_argument("--headless")  # Run Chrome in headless mode (no GUI)
+    chrome_options.add_argument("--headless")  # Run Chrome in headless mode (no GUI)
     chrome_options.add_argument("--window-size=1920x1080")  # Set window size
 
     # Initialize the Chrome webdriver
