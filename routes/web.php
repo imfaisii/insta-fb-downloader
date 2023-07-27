@@ -1,8 +1,8 @@
 <?php
 
-use App\Services\ExtractService;
 use Illuminate\Support\Facades\Route;
-use Spatie\Browsershot\Browsershot;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,20 +16,19 @@ use Spatie\Browsershot\Browsershot;
 */
 
 Route::get('/test', function () {
+    $process = new Process(['python', public_path('/scripts/fb.py')]);
+    $process->run();
 
-    $html = Browsershot::url('https://www.facebook.com/watch?v=734316828376137')
-        ->noSandbox()
-        ->ignoreHttpsErrors()
-        ->setChromePath("/data/www/scrapper.ggstreetview.website/chrome/linux-1108766/chrome-linux/chrome")
-        ->waitUntilNetworkIdle()
-        ->bodyHtml();
-
-    try {
-        $links = ExtractService::facebook($html);
-    } catch (\Exception $exception) {
-        dd($exception->getMessage());
+    // executes after the command finishes
+    if (!$process->isSuccessful()) {
+        throw new ProcessFailedException($process);
     }
 
-    dd($links);
-    return view('welcome');
+    $data = $process->getOutput();
+    $fixedString = $data;
+    while (strpos($fixedString, '\\\\') !== false) {
+        $fixedString = stripslashes($fixedString);
+    }
+    dump(substr(str_replace("\r\n", "", $fixedString), 1, -1));
+    dd(json_decode(substr(str_replace("\r\n", "", $fixedString), 1, -1)));
 });
