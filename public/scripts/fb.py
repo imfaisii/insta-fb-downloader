@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import json
+import chromedriver_autoinstaller
 
 def find_between( s, first, last ):
     try:
@@ -41,6 +42,7 @@ def get_representations(url):
         driver.quit()
 
 if __name__ == "__main__":
+    chromedriver_autoinstaller.install()
     url = "https://fb.watch/lMSBvn4r_E/?mibextid=Nif5oz"
     representations = get_representations(url)
     if representations:
