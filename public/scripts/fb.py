@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import json
+import sys
 
 def find_between( s, first, last ):
     try:
@@ -43,7 +44,11 @@ def get_representations(url):
         driver.quit()
 
 if __name__ == "__main__":
-    url = "https://fb.watch/lMSBvn4r_E/?mibextid=Nif5oz"
-    representations = get_representations(url)
-    if representations:
-        print(json.dumps(representations, indent=2))
+    json_data = json.loads(sys.argv[1])
+
+    if(json_data['platform'] == "facebook"):
+        representations = get_representations(json_data['url'])
+        if representations:
+            print(json.dumps(representations, indent=2))
+    else:
+        print("Platform not supported")

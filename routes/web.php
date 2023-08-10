@@ -14,23 +14,3 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
-Route::get('/test', function () {
-    $process = new Process(['python', public_path('/scripts/fb.py')]);
-    $process->run();
-
-    // executes after the command finishes
-    if (!$process->isSuccessful()) {
-        throw new ProcessFailedException($process);
-    }
-
-    $data = $process->getOutput();
-
-    dd($data);
-    $fixedString = $data;
-    while (strpos($fixedString, '\\\\') !== false) {
-        $fixedString = stripslashes($fixedString);
-    }
-    dump(substr(str_replace("\r\n", "", $fixedString), 1, -1));
-    dd(json_decode(substr(str_replace("\r\n", "", $fixedString), 1, -1)));
-});
