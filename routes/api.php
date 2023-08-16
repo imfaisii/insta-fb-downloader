@@ -27,8 +27,13 @@ Route::post('/links', function (Request $request) {
             'platform' => 'required|in:facebook,instagram',
         ]);
 
-        $process = new Process(['python', public_path('/scripts/fb.py'), json_encode($data)]);
-        $process->run();
+        if ($data['platform'] == "instagram") {
+            $process = new Process(['python', resource_path('/js/app.mjs'), json_encode($data)]);
+            $process->run();
+        } else {
+            $process = new Process(['python', public_path('/scripts/fb.py'), json_encode($data)]);
+            $process->run();
+        }
 
         // executes after the command finishes
         if (!$process->isSuccessful()) {
