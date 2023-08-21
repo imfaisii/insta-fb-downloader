@@ -1,9 +1,12 @@
 <?php
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Exception\ProcessFailedException;
-use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Process as SymphonyProcess;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,7 +32,7 @@ Route::post('/links', function (Request $request) {
 
         $platform = $data['platform'];
 
-        $process = new Process(['python', public_path('/scripts/main.py'), json_encode($data)]);
+        $process = new SymphonyProcess(['python', public_path('/scripts/main.py'), json_encode($data)]);
         $process->run();
 
         // executes after the command finishes
@@ -39,7 +42,7 @@ Route::post('/links', function (Request $request) {
 
         $data = $process->getOutput();
 
-        if($platform == "instagram") {
+        if ($platform == "instagram") {
             return response()->json([
                 'status' => true,
                 'message' => 'Scrapped successfully',
@@ -51,10 +54,43 @@ Route::post('/links', function (Request $request) {
             $data = stripslashes($data);
         }
 
+        $links = json_decode(substr(str_replace("\r\n", "", $data), 1, -1));
+        $mp4 = '';
+        $mp3 = '';
+
+        foreach ($links as $key => $link) {
+
+            if ($mp4 == '' && $link->mime_type == 'video/mp4') {
+                $mp4 =  $link->base_url;
+            }
+
+            if ($mp3 == '' && $link->mime_type == 'audio/mp4') {
+                $mp3 =  $link->base_url;
+            }
+        }
+
+        if (filled($mp4) && filled($mp3)) {
+            $audioFileName = Str::random(20) . ".mp4";
+            $videoFileName = Str::random(20) . ".mp4";
+            $outputFileName = Str::random(30) . ".mp4";
+            $outputFile = Storage::disk('public')->path($outputFileName);
+            $audioFile = Storage::disk('public')->path($audioFileName);
+            $videoFile = Storage::disk('public')->path($videoFileName);
+            Storage::disk('public')->put($videoFileName, file_get_contents($mp4));
+            Storage::disk('public')->put($audioFileName, file_get_contents($mp3));
+
+            // Combine audio and video using FFmpeg
+            $ffmpegCommand = "C:\\ffmpeg\\bin\\ffmpeg.exe -i $videoFile -i $audioFile -c:v copy -c:a aac -strict experimental $outputFile";
+            Process::run($ffmpegCommand);
+
+            Storage::disk('public')->delete($audioFileName);
+            Storage::disk('public')->delete($videoFileName);
+        }
+
         return response()->json([
             'status' => true,
             'message' => 'Scrapped successfully',
-            'data' => json_decode(substr(str_replace("\r\n", "", $data), 1, -1))
+            'data' => ("http://" . request()->httpHost() . "/storage/" . $outputFileName) ?? 'Error'
         ]);
     } catch (Exception $ex) {
         return response()->json([
