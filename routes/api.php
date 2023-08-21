@@ -29,13 +29,8 @@ Route::post('/links', function (Request $request) {
 
         $platform = $data['platform'];
 
-        if ($platform == "instagram") {
-            $process = new Process(['C:\\laragon\\bin\\nodejs\\node-v18\\node.exe', resource_path('/js/instagram.js'), "{$data['url']}"]);
-            $process->run();
-        } else {
-            $process = new Process(['python', public_path('/scripts/fb.py'), json_encode($data)]);
-            $process->run();
-        }
+        $process = new Process(['python', public_path('/scripts/main.py'), json_encode($data)]);
+        $process->run();
 
         // executes after the command finishes
         if (!$process->isSuccessful()) {
@@ -48,7 +43,7 @@ Route::post('/links', function (Request $request) {
             return response()->json([
                 'status' => true,
                 'message' => 'Scrapped successfully',
-                'data' => str_replace("'", '"',str_replace("\n", "", $data))
+                'data' => $data
             ]);
         }
 

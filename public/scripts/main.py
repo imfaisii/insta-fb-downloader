@@ -18,7 +18,7 @@ def find_between( s, first, last ):
 def get_representations(url):
     # Configure Chrome options
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument("--headless=new")
+    # chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--window-size=1920x1080")
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
@@ -43,6 +43,31 @@ def get_representations(url):
         # Close the browser window
         driver.quit()
 
+def get_instagram_representations(url):
+    # Configure Chrome options
+    chrome_options = webdriver.ChromeOptions()
+    # chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--window-size=1920x1080")
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+
+    # Initialize the Chrome webdriver
+    driver = webdriver.Chrome(options=chrome_options)
+
+    try:
+        # Load the URL and wait for the page to fully load
+        driver.get(url)
+        video_element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "video")))
+
+        # Get the 'src' attribute of the <video> tag
+        video_src = video_element.get_attribute('src')
+
+        return video_src
+
+    finally:
+        # Close the browser window
+        driver.quit()
+
 if __name__ == "__main__":
     json_data = json.loads(sys.argv[1])
 
@@ -50,5 +75,7 @@ if __name__ == "__main__":
         representations = get_representations(json_data['url'])
         if representations:
             print(json.dumps(representations, indent=2))
+    elif(json_data['platform'] == "instagram"):
+        print(get_instagram_representations(json_data['url']))
     else:
         print("Platform not supported")
