@@ -55,12 +55,13 @@ Route::post('/links', function (Request $request) {
         }
 
         $links = json_decode(substr(str_replace("\r\n", "", $data), 1, -1));
+        $outputFileName = '';
         $mp4 = '';
         $mp3 = '';
 
         foreach ($links as $key => $link) {
 
-            if ($mp4 == '' && $link->mime_type == 'video/mp4') {
+            if ($mp4 == '' && Str::startsWith($link->mime_type, 'video/')) {
                 $mp4 =  $link->base_url;
             }
 
@@ -90,7 +91,7 @@ Route::post('/links', function (Request $request) {
         return response()->json([
             'status' => true,
             'message' => 'Scrapped successfully',
-            'data' => ("http://" . request()->httpHost() . "/storage/" . $outputFileName) ?? 'Error'
+            'data' => filled($outputFileName) ? ("http://" . request()->httpHost() . "/storage/" . $outputFileName) : (filled($mp4) ? $mp4 : 'Error')
         ]);
     } catch (Exception $ex) {
         return response()->json([
