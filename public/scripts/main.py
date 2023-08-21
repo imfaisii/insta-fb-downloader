@@ -18,7 +18,7 @@ def find_between( s, first, last ):
 def get_representations(url):
     # Configure Chrome options
     chrome_options = webdriver.ChromeOptions()
-    # chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--window-size=1920x1080")
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
@@ -46,7 +46,7 @@ def get_representations(url):
 def get_instagram_representations(url):
     # Configure Chrome options
     chrome_options = webdriver.ChromeOptions()
-    # chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--window-size=1920x1080")
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-dev-shm-usage')
