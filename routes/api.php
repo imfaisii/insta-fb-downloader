@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use App\Http\Controllers\FileController;
 use Symfony\Component\Process\Process as SymphonyProcess;
 
 /*
@@ -101,80 +102,6 @@ Route::post('/links', function (Request $request) {
     }
 });
 
-Route::post('/testlinks', function (Request $request) {
-    try {
-        $data = $request->validate([
-            'url' => 'required|url',
-            'platform' => 'required|in:facebook,instagram',
-        ]);
-
-        if ($data['platform'] == "facebook") {
-            $process = new Process(['python', public_path('/scripts/testfb.py'), json_encode($data)]);
-            $process->run();
-        }
-
-
-        // executes after the command finishes
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
-
-        $data = $process->getOutput();
-
-        while (strpos($data, '\\\\') !== false) {
-            $data = stripslashes($data);
-        }
-
-        return response()->json([
-            'status' => true,
-            'message' => 'scrapped successfully',
-            'data' => json_decode(substr(str_replace("\r\n", "", $data), 1, -1))
-        ]);
-    } catch (Exception $ex) {
-        return response()->json([
-            'status' => false,
-            'message' => $ex->getMessage(),
-        ]);
-    }
-});
-
-Route::post('/storiestestlinks', function (Request $request) {
-    try {
-        $data = $request->validate([
-            'url' => 'required|url',
-            'platform' => 'required|in:facebook,instagram',
-        ]);
-
-        if ($data['platform'] == "facebook") {
-            $process = new Process(['python', public_path('/scripts/fb_story.py'), json_encode($data)]);
-            $process->run();
-        }
-
-
-        // executes after the command finishes
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
-
-        $data = $process->getOutput();
-
-        while (strpos($data, '\\\\') !== false) {
-            $data = stripslashes($data);
-        }
-
-        return response()->json([
-            'status' => true,
-            'message' => 'scrapped successfully',
-            'data' => json_decode(substr(str_replace("\r\n", "", $data), 1, -1))
-        ]);
-    } catch (Exception $ex) {
-        return response()->json([
-            'status' => false,
-            'message' => $ex->getMessage(),
-        ]);
-    }
-});
-
 Route::post('/scrap', function (Request $request) {
 
     $data = $request->validate([
@@ -182,7 +109,7 @@ Route::post('/scrap', function (Request $request) {
         'platform' => 'required|in:facebook,instagram',
     ]);
 
-    $process = new Process([
+    $process = new SymphonyProcess([
         'node',
         'C:\laragon\www\insta-fb-downloader\resources\js\app.mjs',
         json_encode($data)
@@ -203,3 +130,58 @@ Route::post('/scrap', function (Request $request) {
 
     return response()->json(json_decode($response));
 });
+// Route::post('/links', function (Request $request) {
+//     try {
+//         $data = $request->validate([
+//             'url' => 'required|url',
+//             'platform' => 'required|in:facebook,instagram',
+//         ]);
+
+//         $platform = $data['platform'];
+
+//         if ($platform == "instagram") {
+//             $process = new Process(['C:\\laragon\\bin\\nodejs\\node-v18\\node.exe', resource_path('/js/instagram.js'), "{$data['url']}"]);
+//             $process->run();
+//         } else {
+//             $process = new Process(['python', public_path('/scripts/fb.py'), json_encode($data)]);
+//             $process->run();
+//         }
+
+//         // executes after the command finishes
+//         if (!$process->isSuccessful()) {
+//             throw new ProcessFailedException($process);
+//         }
+
+//         $data = $process->getOutput();
+
+//         if($platform == "instagram") {
+//             return response()->json([
+//                 'status' => true,
+//                 'message' => 'Scrapped successfully',
+//                 'data' => str_replace("'", '"',str_replace("\n", "", $data))
+//             ]);
+//         }
+
+//         while (strpos($data, '\\\\') !== false) {
+//             $data = stripslashes($data);
+//         }
+
+//         return response()->json([
+//             'status' => true,
+//             'message' => 'Scrapped successfully',
+//             'data' => json_decode(substr(str_replace("\r\n", "", $data), 1, -1))
+//         ]);
+//     } catch (Exception $ex) {
+//         return response()->json([
+//             'status' => false,
+//             'message' => $ex->getMessage(),
+//         ]);
+//     }
+// });
+
+
+
+
+
+
+

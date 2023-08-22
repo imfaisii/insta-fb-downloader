@@ -1,0 +1,354 @@
+package com.example.mykeyboard
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.database.Cursor
+import android.inputmethodservice.InputMethodService
+import android.inputmethodservice.Keyboard
+import android.inputmethodservice.KeyboardView
+import android.os.*
+import android.provider.UserDictionary
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.text.Html
+import android.text.TextUtils
+import android.util.Log
+import android.view.MotionEvent
+import android.view.View
+import android.view.View.OnTouchListener
+import android.view.inputmethod.InputConnection
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.PopupWindow
+import android.widget.TextView
+import androidx.annotation.RequiresApi
+import androidx.emoji.text.EmojiCompat
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import java.util.*
+
+
+class MyKeyBoradInputService : InputMethodService(), KeyboardView.OnKeyboardActionListener {
+    val EMOJI_SPEC_FILE_PATH = "media/emoji_spec.txt"
+    private val KEYBOARD_LETTERS = 0
+    private val KEYBOARD_SYMBOLS = 1
+    private var keyboardMode = KEYBOARD_LETTERS
+    private var keyboardView: KeyboardView? = null
+    private var myView: LinearLayout? = null
+    private var recyclerView: RecyclerView? = null
+    private var myemojisRecycler: RecyclerView? = null
+    private var mydefaultRecycler: RecyclerView? = null
+    private var keyboard: Keyboard? = null
+    private var list: ArrayList<String>? = null
+    private var vibrationEffect: VibrationEffect? = null
+    private var fileAdapter: FileAdapter? = null
+    private var vibarator: Vibrator? = null
+    private var mEmojiPaletteHolder: View? = null
+    private var txtListening: TextView? = null
+    private var speakTOText: ImageView? = null
+    val RecordAudioRequestCode = 1
+    private var speechRecognizer: SpeechRecognizer? = null
+
+
+    //    private var emojis_list: RecyclerView? = null
+    private var imgback: ImageView? = null
+    private var imgdelete: ImageView? = null
+    private var emojiCompatMetadataVersion = 0
+    private var mPopupKeyboard: PopupWindow? = null
+
+    private var setting: ImageView? = null
+    var ic: InputConnection? = null
+
+    @SuppressLint("ClickableViewAccessibility")
+    @RequiresApi(Build.VERSION_CODES.M)
+    override fun onCreateInputView(): LinearLayout? {
+        myView = View.inflate(this, R.layout.my_layout, null) as LinearLayout
+//        myView!!.setBackgroundResource(R.drawable.ic_launcher_background)
+        keyboardView = myView!!.findViewById(R.id.keyboard_view)
+        setting = myView!!.findViewById(R.id.setting)
+        //  scrollView = myView!!.findViewById(R.id.keyboard_scroll)
+        //  keyboardView = layoutInflater.inflate(R.layout.keyboard_view, null) as KeyboardView
+        recyclerView = myView!!.findViewById(R.id.myRecycler)
+        myemojisRecycler = myView!!.findViewById(R.id.myemojisRecycler)
+        mydefaultRecycler = myView!!.findViewById(R.id.mydefaultRecycler)
+        mEmojiPaletteHolder = myView!!.findViewById(R.id.emoji_palette_holder)
+        speakTOText = myView!!.findViewById(R.id.speakTOText)
+        txtListening = myView!!.findViewById(R.id.txtListening)
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+        ic = currentInputConnection
+        val speechRecognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        speechRecognizerIntent.putExtra(
+            RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+        )
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+
+        speechRecognizer!!.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(bundle: Bundle) {}
+            override fun onBeginningOfSpeech() {
+
+            }
+
+            override fun onRmsChanged(v: Float) {}
+            override fun onBufferReceived(bytes: ByteArray) {}
+            override fun onEndOfSpeech() {}
+            override fun onError(i: Int) {}
+            override fun onResults(bundle: Bundle) {
+                val data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                ic!!.commitText(data!![0], 1)
+                Log.d("TAG", "onResults: ${data[0]}")
+                txtListening!!.visibility=View.GONE
+//                editText.setText(data!![0])
+            }
+
+            override fun onPartialResults(bundle: Bundle) {}
+            override fun onEvent(i: Int, bundle: Bundle) {}
+        })
+
+//        emojis_list = myView!!.findViewById(R.id.emojis_list)
+        recyclerView!!.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        mydefaultRecycler!!.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        myemojisRecycler!!.layoutManager =
+            GridLayoutManager(this, 6)
+        keyboard = Keyboard(this, R.xml.keys_letters_english_qwerty)
+        keyboardView!!.keyboard = keyboard
+        keyboardView!!.setOnKeyboardActionListener(this)
+        keyboardView!!.setBackgroundResource(R.drawable.space)
+        imgback = myView!!.findViewById(R.id.imgback);
+        imgdelete = myView!!.findViewById(R.id.imgdelete);
+        list = ArrayList()
+        dictionary()
+        mPopupKeyboard = PopupWindow(this);
+
+
+        speakTOText!!.setOnTouchListener(OnTouchListener { view, motionEvent ->
+            if (motionEvent.action == MotionEvent.ACTION_UP) {
+                speechRecognizer!!.stopListening()
+            }
+            if (motionEvent.action == MotionEvent.ACTION_DOWN) {
+                txtListening!!.visibility = View.VISIBLE
+                speechRecognizer!!.startListening(speechRecognizerIntent)
+            }
+            false
+        })
+
+
+//        //speakTOText
+//        speakTOText!!.setOnClickListener {
+//            txtListening!!.visibility = View.VISIBLE
+//        }
+
+
+        //  setEditorInfo(currentInputEditorInfo)
+        vibarator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator?;
+        imgback!!.setOnClickListener {
+            myemojisRecycler!!.visibility = View.GONE
+            imgback!!.visibility = View.GONE
+            imgdelete!!.visibility = View.GONE
+            recyclerView!!.visibility = View.VISIBLE
+            keyboardView!!.visibility = View.VISIBLE
+
+        }
+
+        //theme
+        setting!!.setOnClickListener {
+            var intent = Intent(this, ThemeActivity::class.java)
+            intent.flags = FLAG_ACTIVITY_NEW_TASK
+            startActivity(intent)
+
+        }
+
+
+        setupDefualttEmojis()
+        imgdelete!!.setOnClickListener {
+            currentInputConnection.deleteSurroundingText(1, 0)
+        }
+        return myView
+    }
+
+    override fun onPress(p0: Int) {
+        mPopupKeyboard!!.setBackgroundDrawable(null)
+        keyboardView!!.isPreviewEnabled = false
+    }
+
+    override fun onRelease(p0: Int) {
+        mPopupKeyboard!!.setBackgroundDrawable(null)
+        keyboardView!!.isPreviewEnabled = false
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    override fun onKey(p0: Int, p1: IntArray?) {
+
+        when (p0) {
+            Keyboard.KEYCODE_DELETE -> {
+                val selectedText = ic!!.getSelectedText(0)
+                if (TextUtils.isEmpty(selectedText)) {
+                    // no selection, so delete previous character
+                    ic!!.deleteSurroundingText(1, 0)
+                } else {
+                    // delete the selection
+                    ic!!.commitText("", 1)
+                }
+                //     vibrate()
+            }
+            Keyboard.KEYCODE_MODE_CHANGE -> {
+                if (keyboardMode == KEYBOARD_LETTERS) {
+                    keyboardMode = KEYBOARD_SYMBOLS
+                    keyboard = Keyboard(this, R.xml.keys_symbols)
+                    keyboardView!!.keyboard = keyboard
+//                    keyboardView!!.invalidate()
+                } else {
+                    keyboardMode = KEYBOARD_LETTERS
+                    keyboard = Keyboard(this, R.xml.keys_letters_english_qwerty)
+                    keyboardView!!.keyboard = keyboard
+//                    keyboardView!!.invalidate()
+
+                }
+                //  vibrate()
+            }
+            Keyboard.KEYCODE_DONE -> {
+            }
+            -6 -> {
+//                mEmojiPaletteHolder!!.beVisible()
+                myemojisRecycler!!.visibility = View.VISIBLE
+                imgback!!.visibility = View.VISIBLE
+                imgdelete!!.visibility = View.VISIBLE
+                recyclerView!!.visibility = View.GONE
+                keyboardView!!.visibility = View.GONE
+
+                setupEmojis()
+            }
+            else -> {
+                val code: Char = p0.toChar()
+                ic!!.commitText(code.toString(), 1)
+                //  vibrate()
+                filter(code.toString())
+
+
+            }
+        }
+    }
+
+    override fun onText(p0: CharSequence?) {
+        /* val ic = currentInputConnection ?: return
+         val code: CharSequence? = p0
+         ic.commitText(code.toString(), 1)*/
+
+        currentInputConnection?.commitText(
+            EmojiCompat.get().process(Html.fromHtml(p0 as String?)),
+            0
+        )
+    }
+
+    override fun swipeLeft() {
+
+    }
+
+    override fun swipeRight() {
+
+    }
+
+    override fun swipeDown() {
+
+    }
+
+    override fun swipeUp() {
+
+    }
+
+    fun vibrate() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            // this effect creates the vibration of default amplitude for 1000ms(1 sec)
+            vibrationEffect =
+                VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE);
+            // it is safe to cancel other vibrations currently taking place
+            vibarator!!.cancel();
+            vibarator!!.vibrate(vibrationEffect);
+        }
+    }
+
+    fun dictionary() {
+        val cursor: Cursor? =
+            contentResolver.query(UserDictionary.Words.CONTENT_URI, null, null, null, null)
+        try {
+            val idColumn: Int = cursor!!.getColumnIndex(UserDictionary.Words._ID)
+            val frequencyColumn: Int = cursor.getColumnIndex(UserDictionary.Words.FREQUENCY)
+            val wordColumn: Int = cursor.getColumnIndex(UserDictionary.Words.WORD)
+            while (cursor.moveToNext()) {
+                val id: Int = cursor.getInt(idColumn)
+                val frequency: Int = cursor.getInt(frequencyColumn)
+                val word: String = cursor.getString(wordColumn)
+                Log.d("TAG", "dictionary: ${"UserDictionary contains " + word + " words\n"} ")
+                (
+                        "UserDictionary contains " + cursor.getCount().toString() + " words\n"
+                        )
+                list!!.add(word)
+                // dictTextView.append(("\n$id - $frequency - $word"))
+            }
+            fileAdapter = FileAdapter(list!!, this)
+            recyclerView!!.adapter = fileAdapter
+        } finally {
+            cursor!!.close()
+        }
+    }
+
+    private fun filter(toString: String) {
+        //new array list that will hold the filtered data
+        recyclerView!!.visibility = View.GONE
+        fileAdapter?.getFilter()!!.filter(toString)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun setupEmojis() {
+//        ensureBackgroundThread {
+        Handler(Looper.getMainLooper()).post {
+//            setupEmojiAdapter(EMOJIS.emojis)
+        }
+//        }
+    }
+
+//    private fun setupEmojiAdapter(emojis: List<String>) {
+//        emojis_list?.apply {
+//            adapter = EmojisAdapter(context = context, items = emojis) { emoji ->
+//                onText(emoji)
+//                //  vibrateIfNeeded()
+//            }
+//            myemojisRecycler!!.adapter = adapter
+////            onScroll {
+////                mEmojiPaletteHolder!!.emoji_palette_top_bar.elevation = if (it > 4) emojiTopBarElevation else 0f
+////            }
+//        }
+//    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun setupDefualttEmojis() {
+//        ensureBackgroundThread {
+        Handler(Looper.getMainLooper()).post {
+//            setupDefualtEmojiAdapter(EMOJIS.emojis)
+        }
+//        }
+    }
+
+//    private fun setupDefualtEmojiAdapter(emojis: List<String>) {
+//        emojis_list?.apply {
+//
+//            adapter = DefualtEmojisAdapter(context = context, items = emojis) { emoji ->
+//                onText(emoji)
+//                //  vibrateIfNeeded()
+//            }
+//            mydefaultRecycler!!.adapter = adapter
+////            onScroll {
+////                mEmojiPaletteHolder!!.emoji_palette_top_bar.elevation = if (it > 4) emojiTopBarElevation else 0f
+////            }
+//        }
+//    }
+//    fun setEditorInfo(editorInfo: EditorInfo) {
+//        emojiCompatMetadataVersion = editorInfo.extras?.getInt(EmojiCompat.EDITOR_INFO_METAVERSION_KEY, 0) ?: 0
+//    }
+}
