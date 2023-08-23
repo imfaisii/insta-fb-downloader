@@ -10,4 +10,13 @@ use Illuminate\Routing\Controller as BaseController;
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+
+    protected function response(bool $status = true, mixed $data = []): array
+    {
+        return [
+            'status' => $status,
+            'message' => $status ? 'success' : 'error',
+            'data' => $data
+        ];
+    }
 }

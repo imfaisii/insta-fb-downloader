@@ -1,0 +1,3 @@
+pip install selenium
+pip install install BeautifulSoup4
+pip install selenium-wire

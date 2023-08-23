@@ -14,3 +14,5 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+Route::get('/', fn () => 'Scrapper API');
