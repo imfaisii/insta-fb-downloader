@@ -45,7 +45,6 @@ export const createFile = async (
     data: string,
 ): Promise<void> => {
     if (!checkIfFileOrDirectoryExists(path)) {
-        console.log(path);
         fs.mkdirSync(path);
     }
 

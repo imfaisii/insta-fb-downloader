@@ -1,26 +1,28 @@
-import { Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { ScrappersService } from './scrappers.service';
+import { containsStories, createApiResponse } from '@src/helpers/global';
 
 @Controller('scrappers')
 export class ScrappersController {
     constructor(private readonly scrappersService: ScrappersService) {}
 
     @Post()
-    async scrap() {
+    async scrap(@Body() body: any) {
         try {
-            const { data } = await this.scrappersService.scrap();
+            const { url, showBrowser } = body;
 
-            console.log('this is data', data);
+            if (!url || !containsStories(url)) {
+                return createApiResponse(false, 'invalid url');
+            }
 
-            return {
-                data: 'done',
-            };
+            const { data } = await this.scrappersService.scrap(
+                body.url,
+                showBrowser,
+            );
+
+            return createApiResponse(true, 'success', data);
         } catch (error) {
-            return {
-                status: false,
-                messsage: error.message,
-                data: [],
-            };
+            return createApiResponse(false, error.message);
         }
     }
 }

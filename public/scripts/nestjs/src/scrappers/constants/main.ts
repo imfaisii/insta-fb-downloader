@@ -43,6 +43,7 @@ export const BROWSER_OPTIONS = [
     '--disable-features=IsolateOrigins',
     '--disable-site-isolation-trials',
     '--disable-features=BlockInsecurePrivateNetworkRequests',
+    '--disable-features=site-per-process',
 ];
 
 export const COOKIES_PATH = 'src/scrappers/cookies';
