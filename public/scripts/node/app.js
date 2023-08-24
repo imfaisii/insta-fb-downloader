@@ -1,28 +1,20 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs").promises;
+const StealthPlugin = require("puppeteer-extra-plugin-stealth");
+const pluginProxy = require("puppeteer-extra-plugin-proxy");
 
 const args = process.argv.slice(2);
-const INSTAGRAM_COOKIES_PATH = "./cookies/instagram.json";
+const INSTAGRAM_COOKIES_PATH = "./cookies/instagram.json"
 
-// server conf
-const express = require("express");
-const cors = require("cors");
+// puppeteer.use(StealthPlugin());
 
-const app = express();
-const PORT = 3000; // Change this to your desired port number
-
-app.use(express.json());
-app.use(cors());
-app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "X-Requested-With");
-    res.header("Access-Control-Allow-Headers", "Content-Type");
-    res.header(
-        "Access-Control-Allow-Methods",
-        "PUT, GET, POST, DELETE, OPTIONS"
-    );
-    next();
-});
+// add proxy plugin without proxy crendentials
+// puppeteer.use(
+//     pluginProxy({
+//         address: "110.93.223.193",
+//         port: 80,
+//     })
+// );
 
 async function login(page) {
     // Navigate to the target page
@@ -46,7 +38,11 @@ async function login(page) {
     const cookies = await page.cookies();
 
     // Save cookies to a file for later use
-    fs.writeFile(INSTAGRAM_COOKIES_PATH, JSON.stringify(cookies), (err) => {});
+    fs.writeFile(
+        INSTAGRAM_COOKIES_PATH,
+        JSON.stringify(cookies),
+        (err) => {}
+    );
 }
 
 async function getMediaApiData(page, storyUrl) {
@@ -65,21 +61,7 @@ async function getMediaApiData(page, storyUrl) {
     return await mediaApiResponse.json();
 }
 
-app.post("/process", async (req, res) => {
-    const { url } = req.body;
-
-    if(!url || url == '') {
-        res.json({
-            status: false,
-            message: "Invalid/Empty URL"
-        })
-    }
-
-    res.json({
-        message: "OCR process completed successfully.",
-    });
-
-    return;
+(async () => {
     if (args.length === 0) {
         console.log("Please provide the story url as an argument");
         return;
@@ -89,7 +71,7 @@ app.post("/process", async (req, res) => {
 
     // Launch a headless browser instance
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: [
             "--disable-gpu",
             "--ignore-certificate-errors",
@@ -145,10 +127,7 @@ app.post("/process", async (req, res) => {
 
     // Check if cookies file exists and load cookies if present
     try {
-        const cookiesString = await fs.readFile(
-            INSTAGRAM_COOKIES_PATH,
-            "utf-8"
-        );
+        const cookiesString = await fs.readFile(INSTAGRAM_COOKIES_PATH, "utf-8");
         const cookies = JSON.parse(cookiesString);
         await page.setCookie(...cookies);
     } catch (error) {
@@ -178,7 +157,7 @@ app.post("/process", async (req, res) => {
 
     console.log("Request interception setup");
     // login user
-    // await login(page);
+    await login(page);
 
     console.log("User logged in");
     // get api data
@@ -219,8 +198,4 @@ app.post("/process", async (req, res) => {
 
     // Close the browser
     await browser.close();
-});
-
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} with cors`);
-});
+})();
